@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic Tac Toe - Medium AI</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+
+        #game {
+            margin: 50px auto;
+            width: 300px;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        #board {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            grid-gap: 5px;
+            margin: 20px auto;
+        }
+
+        .cell {
+            width: 100px;
+            height: 100px;
+            background-color: #ffffff;
+            border: 2px solid #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            cursor: pointer;
+            font-weight: bold;
+            user-select: none;
+        }
+
+        .cell:hover {
+            background-color: #f0f0f0;
+        }
+
+        #status {
+            font-size: 18px;
+            margin: 10px 0;
+            color: #333;
+        }
+
+        #reset {
+            background-color: #333;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        #reset:hover {
+            background-color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div id="game">
+        <h1>Tic Tac Toe</h1>
+        <div id="board">
+        </div>
+        <div id="status"></div>
+        <button id="reset">Restart Game</button>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const board = document.getElementById('board');
+            const status = document.getElementById('status');
+            const resetButton = document.getElementById('reset');
+
+            let currentPlayer = 'X'; 
+            let gameActive = true;
+            let boardState = Array(9).fill(null);
+
+            const winningCombinations = [
+                [0, 1, 2],
+                [3, 4, 5],
+                [6, 7, 8],
+                [0, 3, 6],
+                [1, 4, 7],
+                [2, 5, 8],
+                [0, 4, 8],
+                [2, 4, 6]
+            ];
+
+            function initializeBoard() {
+                board.innerHTML = '';
+                boardState = Array(9).fill(null);
+                gameActive = true;
+                currentPlayer = 'X';
+                status.textContent = `Player's turn`;
+                for (let i = 0; i < 9; i++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('cell');
+                    cell.dataset.index = i;
+                    cell.addEventListener('click', handlePlayerMove);
+                    board.appendChild(cell);
+                }
+            }
+
+            function handlePlayerMove(e) {
+                const cell = e.target;
+                const index = cell.dataset.index;
+
+                if (boardState[index] || !gameActive || currentPlayer !== 'X') {
+                    return;
+                }
+
+                boardState[index] = currentPlayer;
+                cell.textContent = currentPlayer;
+
+                if (checkWin()) {
+                    status.textContent = `Player wins!`;
+                    gameActive = false;
+                } else if (boardState.every(cell => cell !== null)) {
+                    status.textContent = `It's a draw!`;
+                    gameActive = faslse;
+                } else {
+                    currentPlayer = 'O'; 
+                    status.textContent = `Computer's turn`;
+                    setTimeout(handleComputerMove, 500);
+                }
+            }
+
+            function handleComputerMove() {
+                if (!gameActive) return;
+
+                const move = findBestMove();
+                if (move !== null) {
+                    boardState[move] = currentPlayer;
+                    document.querySelector(`.cell[data-index='${move}']`).textContent = currentPlayer;
+
+                    if (checkWin()) {
+                        status.textContent = `Computer wins!`;
+                        gameActive = false;
+                    } else if (boardState.every(cell => cell !== null)) {
+                        status.textContent = `It's a draw!`;
+                        gameActive = false;
+                    } else {
+                        currentPlayer = 'X';
+                        status.textContent = `Player's turn`;
+                    }
+                }
+            }
+
+            function findBestMove() {
+                
+                for (const combo of winningCombinations) {
+                    const [a, b, c] = combo;
+                    if (
+                        boardState[a] === 'O' &&
+                        boardState[b] === 'O' &&
+                        boardState[c] === null
+                    ) return c;
+                    if (
+                        boardState[a] === 'O' &&
+                        boardState[c] === 'O' &&
+                        boardState[b] === null
+                    ) return b;
+                    if (
+                        boardState[b] === 'O' &&
+                        boardState[c] === 'O' &&
+                        boardState[a] === null
+                    ) return a;
+                }
+
+               
+                for (const combo of winningCombinations) {
+                    const [a, b, c] = combo;
+                    if (
+                        boardState[a] === 'X' &&
+                        boardState[b] === 'X' &&
+                        boardState[c] === null
+                    ) return c;
+                    if (
+                        boardState[a] === 'X' &&
+                        boardState[c] === 'X' &&
+                        boardState[b] === null
+                    ) return b;
+                    if (
+                        boardState[b] === 'X' &&
+                        boardState[c] === 'X' &&
+                        boardState[a] === null
+                    ) return a;
+                }
+
+                
+                const availableCells = boardState.map((value, index) => (value === null ? index : null)).filter(value => value !== null);
+                return availableCells.length > 0 ? availableCells[Math.floor(Math.random() * availableCells.length)] : null;
+            }
+
+            function checkWin() {
+                return winningCombinations.some(combination => {
+                    const [a, b, c] = combination;
+                    return (
+                        boardState[a] === currentPlayer &&
+                        boardState[b] === currentPlayer &&
+                        boardState[c] === currentPlayer
+                    );
+                });
+            }
+
+            resetButton.addEventListener('click', initializeBoard);
+
+            initializeBoard();
+        });
+    </script>
+</body>
+</html>
